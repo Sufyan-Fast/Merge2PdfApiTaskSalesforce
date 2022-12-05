@@ -13,10 +13,9 @@ export default class Attachement1Component extends LightningElement {
   mergePdfUrl;
   error;
 
+  // custom event for getting public url from child
   handleGetPublicUrl(event) {
     this.publicUrlPdf2 = event.detail;
-    //function call when we get our second public url from child
-    this.getMergePdfUrl(this.publicUrlPdf1, this.publicUrlPdf2);
   }
 
   openfileUpload(event) {
@@ -27,61 +26,65 @@ export default class Attachement1Component extends LightningElement {
       this.fileData = {
         filename: file.name,
         base64: base64,
-        recordId: this.recordId
+        recordId: this.recordId,
       };
     };
     reader.readAsDataURL(file);
   }
 
+  //call from submit button
   handleClick() {
-    const { base64, filename, recordId } = this.fileData;
-    uploadFile({ base64, filename, recordId })
-      .then((result) => {
-        this.DocumentId = result;
-        this.fileData = null;
-        let title = `Files uploaded successfully!!`;
-        //function call for child function to get things done for second document
-        this.template.querySelector("c-attachement-2-component").handleClick();
-        //toast function
-        this.toast(title);
-        //function for generate public url for document1
-        this.generatePublicURLDocument(this.DocumentId);
-      })
-      .catch((error) => {
-        this.error = error;
-        this.DocumentId = undefined;
-      });
+    this.callPromiseFunctions();
   }
 
-  generatePublicURLDocument(documentId) {
-    generatePublicLink({ contentDocumentId: documentId })
-      .then((result) => {
-        this.publicUrlPdf1 = result;
-      })
-      .catch((error) => {
-        this.error = error;
-        this.publicUrlPdf1 = undefined;
+  async callPromiseFunctions() {
+    try {
+      const { base64, filename, recordId } = this.fileData;
+      const result = await uploadFile({ base64, filename, recordId });
+      this.DocumentId = result;
+      this.fileData = null;
+      await this.template
+        .querySelector("c-attachement-2-component")
+        .callChildPromiseFunctions();
+      await this.generatePublicURLDocument(this.DocumentId);
+      await this.toast();
+      await this.getMergePdfUrl(this.publicUrlPdf1, this.publicUrlPdf2);
+    } catch (error) {
+      this.error = error;
+      this.DocumentId = undefined;
+    }
+  }
+
+  //get public url of document
+  async generatePublicURLDocument(documentId) {
+    try {
+      const result = await generatePublicLink({
+        contentDocumentId: documentId,
       });
+      this.publicUrlPdf1 = result;
+    } catch (error) {
+      this.error = error;
+      this.publicUrlPdf1 = undefined;
+    }
   }
   //toast function
-  toast(title) {
+  toast() {
     const toastEvent = new ShowToastEvent({
-      title,
-      variant: "success"
+      title: "Files uploaded successfully!!",
+      variant: "success",
     });
     this.dispatchEvent(toastEvent);
   }
 
   //function that call for the merge url
-  getMergePdfUrl(url1, url2) {
-    generateHttpRequest({ url1: url1, url2: url2 })
-      .then((result) => {
-        this.mergePdfUrl = result;
-        window.open(this.mergePdfUrl, "_blank");
-      })
-      .catch((error) => {
-        this.error = error;
-        this.mergePdfUrl = undefined;
-      });
+  async getMergePdfUrl(url1, url2) {
+    try {
+      const result = await generateHttpRequest({ url1: url1, url2: url2 });
+      this.mergePdfUrl = result;
+      window.open(this.mergePdfUrl, "_blank");
+    } catch (error) {
+      this.error = error;
+      this.mergePdfUrl = undefined;
+    }
   }
 }

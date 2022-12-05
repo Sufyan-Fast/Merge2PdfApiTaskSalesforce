@@ -17,39 +17,39 @@ export default class Attachement2Component extends LightningElement {
       this.fileData = {
         filename: file.name,
         base64: base64,
-        recordId: this.recordId
+        recordId: this.recordId,
       };
     };
     reader.readAsDataURL(file);
   }
+
   @api
-  handleClick() {
-    const { base64, filename, recordId } = this.fileData;
-    uploadFile({ base64, filename, recordId })
-      .then((result) => {
-        this.DocumentId = result;
-        this.fileData = null;
-        this.generatePublicURLDocument(this.DocumentId);
-      })
-      .catch((error) => {
-        this.error = error;
-        this.DocumentId = undefined;
-      });
+  async callChildPromiseFunctions() {
+    try {
+      const { base64, filename, recordId } = this.fileData;
+      const result = await uploadFile({ base64, filename, recordId });
+      this.DocumentId = result;
+      this.fileData = null;
+      await this.generatePublicURLDocument(this.DocumentId);
+    } catch (error) {
+      this.error = error;
+      this.documentId = undefined;
+    }
   }
-
-  generatePublicURLDocument(documentId) {
-    generatePublicLink({ contentDocumentId: documentId })
-      .then((result) => {
-        this.publicUrl = result;
-        const selectedEvent = new CustomEvent("getpublicurl", {
-          detail: this.publicUrl
-        });
-
-        this.dispatchEvent(selectedEvent);
-      })
-      .catch((error) => {
-        this.error = error;
-        this.publicUrl = undefined;
+  //generate public link for second document
+  async generatePublicURLDocument(documentId) {
+    try {
+      const result = await generatePublicLink({
+        contentDocumentId: documentId,
       });
+      this.publicUrl = result;
+      const selectedEvent = new CustomEvent("getpublicurl", {
+        detail: this.publicUrl,
+      });
+      this.dispatchEvent(selectedEvent);
+    } catch (error) {
+      this.error = error;
+      this.publicUrl = undefined;
+    }
   }
 }
