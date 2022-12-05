@@ -1,0 +1,30 @@
+<template>
+  <div>
+    <lightning-card title="File Uploader For Task" icon-name="custom:custom14">
+      <div class="slds-m-around_medium">
+        <lightning-input
+          type="file"
+          accept=".pdf"
+          label="Attachment 1"
+          onchange={openfileUpload}
+        ></lightning-input>
+      </div>
+      <template if:true={fileData}>
+        <p style="margin-left: 20px">{fileData.filename}</p>
+      </template>
+
+      <div style="margin-top: 20px">
+        <c-attachement-2-component ongetpublicurl={handleGetPublicUrl}>
+        </c-attachement-2-component>
+      </div>
+
+      <lightning-button
+        variant="brand"
+        label="submit"
+        title="Submit"
+        onclick={handleClick}
+        class="slds-m-left_x-small"
+      ></lightning-button>
+    </lightning-card>
+  </div>
+</template>
